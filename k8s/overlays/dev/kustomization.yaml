@@ -10,11 +10,6 @@ resources:
 
 # Dev-specific configurations
 patches:
-- path: serviceaccount-patch.yaml
-  target:
-    kind: ServiceAccount
-    name: opentelemetry-collector
-
 - patch: |-
     - op: replace
       path: /spec/replicas
@@ -52,6 +47,10 @@ patches:
             configMapKeyRef:
               name: opentelemetry-collector-env
               key: GOOGLE_CLOUD_PROJECT
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
   target:
     kind: Deployment
     name: opentelemetry-collector

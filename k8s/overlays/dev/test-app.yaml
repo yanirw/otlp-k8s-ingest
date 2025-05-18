@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-app
+  namespace: opentelemetry-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-app
+  template:
+    metadata:
+      labels:
+        app: test-app
+    spec:
+      containers:
+      - name: test-app
+        image: curlimages/curl:latest
+        command: 
+        - /bin/sh
+        - -c
+        - |
+          while true; do
+            curl -X POST http://opentelemetry-collector.opentelemetry-system.svc.cluster.local:4318/v1/traces \
+              -H "Content-Type: application/json" \
+              -d '{"resourceSpans":[{"resource":{"attributes":[{"key":"service.name","value":{"stringValue":"test-service"}}]},"scopeSpans":[{"spans":[{"traceId":"00000000000000000000000000000000","spanId":"0000000000000000","name":"test-span","kind":1,"startTimeUnixNano":"'$(date +%s%N)'","endTimeUnixNano":"'$(date +%s%N)'"}]}]}]}'
+            sleep 5
+          done 

@@ -6,6 +6,7 @@ namespace: opentelemetry-system
 resources:
 - ../../base
 - env-config.yaml
+- test-app.yaml
 
 # Dev-specific configurations
 patches:

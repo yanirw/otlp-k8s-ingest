@@ -19,6 +19,9 @@ patches:
     - op: replace
       path: /spec/replicas
       value: 1
+    - op: add
+      path: /spec/revisionHistoryLimit
+      value: 1
   target:
     kind: Deployment
     name: opentelemetry-collector
@@ -49,8 +52,6 @@ patches:
             configMapKeyRef:
               name: opentelemetry-collector-env
               key: GOOGLE_CLOUD_PROJECT
-        - name: GOOGLE_APPLICATION_CREDENTIALS
-          value: /var/secrets/google/key.json
   target:
     kind: Deployment
     name: opentelemetry-collector

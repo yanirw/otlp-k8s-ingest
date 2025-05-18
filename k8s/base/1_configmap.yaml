@@ -106,6 +106,7 @@ data:
       health_check:
         endpoint: ${env:MY_POD_IP}:13133
       googleclientauth:
+        use_workload_identity: true
 
     service:
       extensions:

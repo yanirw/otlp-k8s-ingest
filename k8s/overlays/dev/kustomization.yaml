@@ -6,7 +6,6 @@ namespace: opentelemetry-system
 resources:
 - ../../base
 - env-config.yaml
-- test-app.yaml
 
 # Dev-specific configurations
 patches:
@@ -34,19 +33,9 @@ patches:
     - op: replace
       path: /spec/template/spec/containers/0/resources/limits/cpu
       value: 200m
-  target:
-    kind: Deployment
-    name: opentelemetry-collector
-
-- patch: |-
-    - op: replace
+    - op: add
       path: /spec/template/spec/containers/0/env
       value:
-        - name: GOOGLE_CLOUD_PROJECT
-          valueFrom:
-            configMapKeyRef:
-              name: opentelemetry-collector-env
-              key: GOOGLE_CLOUD_PROJECT
         - name: MY_POD_IP
           valueFrom:
             fieldRef:

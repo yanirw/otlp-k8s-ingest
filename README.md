@@ -1,87 +1,148 @@
-# OTLP Kubernetes Ingest
+# OpenTelemetry Collector Setup for GCP
 
-This project contains Kubernetes manifests for self-deployed OTLP ingest on Kubernetes.
+This repository contains the configuration for deploying an OpenTelemetry Collector to Kubernetes with Google Cloud integration.
 
-## Running on GKE
+## Prerequisites
 
-Before we begin, set required environment variables:
-```console
-export GOOGLE_CLOUD_PROJECT=<your project id>
-export PROJECT_NUMBER=$(gcloud projects describe ${GOOGLE_CLOUD_PROJECT} --format="value(projectNumber)")
+- A GKE cluster with Workload Identity enabled
+- `gcloud` CLI tool installed
+- `kubectl` configured to access your GKE cluster
+- Terraform (if using infrastructure as code)
+
+## Setup Instructions
+
+### 1. Create Google Cloud Service Account
+
+#### Using gcloud CLI
+
+```bash
+# Create the service account
+gcloud iam service-accounts create opentelemetry-collector \
+    --display-name="OpenTelemetry Collector" \
+    --project=yan-lab
+
+# Grant necessary roles
+gcloud projects add-iam-policy-binding yan-lab \
+    --member="serviceAccount:opentelemetry-collector@yan-lab.iam.gserviceaccount.com" \
+    --role="roles/cloudtrace.agent"
+
+gcloud projects add-iam-policy-binding yan-lab \
+    --member="serviceAccount:opentelemetry-collector@yan-lab.iam.gserviceaccount.com" \
+    --role="roles/monitoring.metricWriter"
+
+gcloud projects add-iam-policy-binding yan-lab \
+    --member="serviceAccount:opentelemetry-collector@yan-lab.iam.gserviceaccount.com" \
+    --role="roles/logging.logWriter"
+
+# Allow the Kubernetes service account to impersonate the GCP service account
+gcloud iam service-accounts add-iam-policy-binding opentelemetry-collector@yan-lab.iam.gserviceaccount.com \
+    --role="roles/iam.workloadIdentityUser" \
+    --member="serviceAccount:yan-lab.svc.id.goog[opentelemetry-system/opentelemetry-collector]"
 ```
 
-### Configure IAM Permissions
+#### Using Terraform
 
-**You can skip this step if you have disabled GKE workload identity in your cluster.**
+```hcl
+# Create the service account
+resource "google_service_account" "opentelemetry_collector" {
+  account_id   = "opentelemetry-collector"
+  display_name = "OpenTelemetry Collector"
+  project      = "yan-lab"
+}
 
-Follow the [Workload Identity
-docs](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity)
-to allow the collector's kubernetes service account to write logs, traces, and metrics:
+# Grant necessary roles
+resource "google_project_iam_member" "cloudtrace_agent" {
+  project = "yan-lab"
+  role    = "roles/cloudtrace.agent"
+  member  = "serviceAccount:${google_service_account.opentelemetry_collector.email}"
+}
 
-```console
-gcloud projects add-iam-policy-binding projects/$GOOGLE_CLOUD_PROJECT \
-    --role=roles/logging.logWriter \
-    --member=principal://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$GOOGLE_CLOUD_PROJECT.svc.id.goog/subject/ns/opentelemetry/sa/opentelemetry-collector \
-    --condition=None
-gcloud projects add-iam-policy-binding projects/$GOOGLE_CLOUD_PROJECT \
-    --role=roles/monitoring.metricWriter \
-    --member=principal://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$GOOGLE_CLOUD_PROJECT.svc.id.goog/subject/ns/opentelemetry/sa/opentelemetry-collector \
-    --condition=None
-gcloud projects add-iam-policy-binding projects/$GOOGLE_CLOUD_PROJECT \
-    --role=roles/cloudtrace.agent \
-    --member=principal://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/$GOOGLE_CLOUD_PROJECT.svc.id.goog/subject/ns/opentelemetry/sa/opentelemetry-collector \
-    --condition=None
+resource "google_project_iam_member" "monitoring_metric_writer" {
+  project = "yan-lab"
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.opentelemetry_collector.email}"
+}
+
+resource "google_project_iam_member" "logging_log_writer" {
+  project = "yan-lab"
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.opentelemetry_collector.email}"
+}
+
+# Allow the Kubernetes service account to impersonate the GCP service account
+resource "google_service_account_iam_member" "workload_identity_user" {
+  service_account_id = google_service_account.opentelemetry_collector.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:yan-lab.svc.id.goog[opentelemetry-system/opentelemetry-collector]"
+}
 ```
 
-### Install the manifests
+### 2. Environment-Specific Configuration
 
-First, make sure you have followed the Workload Identity setup steps above.
+#### Development Environment
 
-Then, apply the Kubernetes manifests directly from this repo:
-
-```console
-kubectl kustomize https://github.com/GoogleCloudPlatform/otlp-k8s-ingest/k8s/base | envsubst | kubectl apply -f -
+1. Update the service account name in `k8s/overlays/dev/kustomization.yaml`:
+```yaml
+patches:
+  - target:
+      kind: ServiceAccount
+      name: opentelemetry-collector
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/iam.gke.io~1gcp-service-account
+        value: opentelemetry-collector@yan-lab.iam.gserviceaccount.com
 ```
 
-(Remember to set the `GOOGLE_CLOUD_PROJECT` environment variable.)
-
-### [Optional] Run the OpenTelemetry demo application alongside the collector
-
-To test out and see the deployment in action, you can run the demo OpenTemetry application using
-```console
-kubectl apply  -f sample/.
+2. Apply the configuration:
+```bash
+kubectl apply -k k8s/overlays/dev
 ```
 
-### See Telemetry in Google Cloud Observability
+#### Production Environment
 
-Metrics, Log and Traces should be now available in your project in Cloud Observability.
-You can see metrics under "Prometheus Target" in Cloud Monitoring.
+1. Create a new overlay for production:
+```bash
+mkdir -p k8s/overlays/production
+```
 
-### Observability of the OpenTelemetry Collector
+2. Create a production-specific kustomization file with appropriate resource limits and replicas.
 
-In order to monitor the OpenTelemetry collector, you can deploy the dashboards available [here](https://github.com/GoogleCloudPlatform/monitoring-dashboard-samples/tree/master/dashboards/opentelemetry-collector).
+3. Update the service account name in the production overlay.
 
-You can import these dashboards by navigating to the Google Cloud Console and:
+4. Apply the configuration:
+```bash
+kubectl apply -k k8s/overlays/production
+```
 
-- Navigating to `Monitoring` > `Dashboards`
-- Clicking on the `Sample Library` tab to find all available samples
-- Clicking on the `OpenTelemetry Collector` category from the list
-- Select and import the available dashboards
+## Verification
 
-Once you import and apply the dashboard, you'll see several metrics tracking the uptime of the collector, its memory footprint and the API calls it makes to Cloud Observability:
+To verify the setup is working:
 
-![OpenTelemetry Collector Dashboard](/dashboard.png "OpenTelemetry Collector Dashboard")
+1. Check the collector logs:
+```bash
+kubectl logs -n opentelemetry-system -l app=opentelemetry-collector
+```
 
-## Contributing
+2. Verify data is being exported to:
+   - Google Cloud Trace
+   - Google Cloud Monitoring
+   - Google Cloud Logging
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for details.
+## Troubleshooting
 
-## License
+If you encounter permission issues:
 
-Apache 2.0; see [`LICENSE`](LICENSE) for details.
+1. Verify the service account has the correct roles:
+```bash
+gcloud projects get-iam-policy yan-lab
+```
 
-## Disclaimer
+2. Check the Workload Identity binding:
+```bash
+gcloud iam service-accounts get-iam-policy opentelemetry-collector@yan-lab.iam.gserviceaccount.com
+```
 
-This project is not an official Google project. It is not supported by
-Google and Google specifically disclaims all warranties as to its quality,
-merchantability, or fitness for a particular purpose.
+3. Ensure the Kubernetes service account exists:
+```bash
+kubectl get serviceaccount opentelemetry-collector -n opentelemetry-system
+```

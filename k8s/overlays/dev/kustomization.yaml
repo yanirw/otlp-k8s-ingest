@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: opentelemetry-system
+namespace: shob-opentelemetry-scraper
 
 resources:
 - ../../base
@@ -40,6 +40,19 @@ patches:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+    - op: add
+      path: /spec/template/spec/containers/0/env
+      value:
+        - name: GOOGLE_CLOUD_PROJECT
+          valueFrom:
+            configMapKeyRef:
+              name: opentelemetry-collector-env
+              key: GOOGLE_CLOUD_PROJECT
+        - name: PROJECT_NUMBER
+          valueFrom:
+            configMapKeyRef:
+              name: opentelemetry-collector-env
+              key: PROJECT_NUMBER       
   target:
     kind: Deployment
     name: opentelemetry-collector
@@ -48,3 +61,4 @@ patches:
 commonLabels:
   environment: dev
   managed-by: argocd 
+

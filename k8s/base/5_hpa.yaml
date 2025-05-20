@@ -16,7 +16,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: opentelemetry-collector
-  namespace: opentelemetry
+  namespace: shob-opentelemetry-scraper
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

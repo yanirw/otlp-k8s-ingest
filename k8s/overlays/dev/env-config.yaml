@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: opentelemetry-collector-env
-  namespace: opentelemetry-system
+  namespace: shob-opentelemetry-scraper
 data:
-  GOOGLE_CLOUD_PROJECT: "yan-lab"
-  PROJECT_NUMBER: "319008131566" 
+  GOOGLE_CLOUD_PROJECT: "gl-idev-int-chnl-proj-gke"
+  PROJECT_NUMBER: "644079049985"

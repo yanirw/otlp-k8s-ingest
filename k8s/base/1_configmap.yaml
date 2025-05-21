@@ -40,7 +40,6 @@ data:
         send_batch_max_size: 100
         send_batch_size: 100
         timeout: 60s
-        metrics_per_batch: 100
 
       k8sattributes:
         extract:

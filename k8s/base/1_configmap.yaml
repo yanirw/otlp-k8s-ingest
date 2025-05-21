@@ -162,9 +162,9 @@ data:
       otlp/self-metrics:
         protocols:
           grpc:
-            endpoint: ${env:MY_POD_IP}:14317
+            endpoint:  ${env:MY_POD_IP}:14317
             tls:
-              insecure: true
+              enabled: false
 
     service:
       extensions:

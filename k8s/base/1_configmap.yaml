@@ -22,6 +22,9 @@ data:
         user_agent: Google-Cloud-OTLP manifests:0.2.0 OpenTelemetry Collector Built By Google/0.121.0 (linux/amd64)
       googlemanagedprometheus:
         user_agent: Google-Cloud-OTLP manifests:0.2.0 OpenTelemetry Collector Built By Google/0.121.0 (linux/amd64)
+        collection_interval: 60s
+        metric_config:
+          override_gauge_temporality_preference: cumulative
 
     extensions:
       health_check:
@@ -37,9 +40,10 @@ data:
             - otelcol_grpc_io_client_completed_rpcs
             - otelcol_googlecloudmonitoring_point_count
       batch:
-        send_batch_max_size: 200
-        send_batch_size: 200
-        timeout: 5s
+        send_batch_max_size: 100
+        send_batch_size: 100
+        timeout: 60s
+        metrics_per_batch: 100
 
       k8sattributes:
         extract:

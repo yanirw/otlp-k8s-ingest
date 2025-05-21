@@ -22,9 +22,6 @@ data:
         user_agent: Google-Cloud-OTLP manifests:0.2.0 OpenTelemetry Collector Built By Google/0.121.0 (linux/amd64)
       googlemanagedprometheus:
         user_agent: Google-Cloud-OTLP manifests:0.2.0 OpenTelemetry Collector Built By Google/0.121.0 (linux/amd64)
-        collection_interval: 60s
-        metric_config:
-          override_gauge_temporality_preference: cumulative
 
     extensions:
       health_check:

@@ -200,4 +200,4 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   name: collector-config
-  namespace: opentelemetry
+  namespace: shob-opentelemetry-scraper

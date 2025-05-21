@@ -16,7 +16,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: opentelemetry-collector
-  namespace: opentelemetry
+  namespace: shob-opentelemetry-scraper
   labels:
     app: opentelemetry-collector
 spec:

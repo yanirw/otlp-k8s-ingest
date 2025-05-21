@@ -1,8 +1,4 @@
 apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: opentelemetry-collector-config
-  namespace: opentelemetry-system
 data:
   collector.yaml: |
     # Copyright 2024 Google LLC
@@ -163,8 +159,6 @@ data:
         protocols:
           grpc:
             endpoint: ${env:MY_POD_IP}:14317
-            tls:
-              insecure_skip_verify: true
 
     service:
       extensions:
@@ -226,3 +220,8 @@ data:
                 otlp:
                   protocol: grpc
                   endpoint: ${env:MY_POD_IP}:14317
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: collector-config
+  namespace: opentelemetry

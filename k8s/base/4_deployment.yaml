@@ -74,7 +74,7 @@ spec:
       volumes:
           - name: collector-config
             configMap:
-              name: opentelemetry-collector-config
+              name: collector-config
               items:
               - key: collector.yaml
                 path: collector.yaml

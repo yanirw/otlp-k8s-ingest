@@ -163,6 +163,8 @@ data:
         protocols:
           grpc:
             endpoint: ${env:MY_POD_IP}:14317
+            tls:
+              insecure: true
 
     service:
       extensions:

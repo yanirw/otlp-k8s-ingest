@@ -16,7 +16,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: opentelemetry-collector
-  namespace: shob-opentelemetry-scraper
+  namespace: opentelemetry
   labels:
     app: opentelemetry-collector
 spec:
@@ -35,8 +35,7 @@ spec:
       containers:
       - name: opentelemetry-collector
         imagePullPolicy: Always
-        image: us-docker.pkg.dev/cloud-ops-agents-artifacts/google-cloud-opentelemetry-collector/otelcol-google:0.122.1
-        # image: dbank-cmdo-devops-docker-virtual.jfrog.io/cloud-ops-agents-artifacts/google-cloud-opentelemetry-collector/otelcol-google:0.122.1
+        image: us-docker.pkg.dev/cloud-ops-agents-artifacts/google-cloud-opentelemetry-collector/otelcol-google:0.121.0
         args:
           - "--config=/conf/collector.yaml"
           - "--feature-gates=exporter.googlemanagedprometheus.intToDouble"
@@ -46,9 +45,6 @@ spec:
             protocol: TCP
           - name: otlp-http
             containerPort: 4318
-            protocol: TCP
-          - name: healthcheck
-            containerPort: 13133
             protocol: TCP
         env:
           - name: MY_POD_IP
@@ -68,9 +64,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /
-            port: healthcheck
-          initialDelaySeconds: 5
-          periodSeconds: 10
+            port: 13133
       volumes:
           - name: collector-config
             configMap:
@@ -78,5 +72,3 @@ spec:
               items:
               - key: collector.yaml
                 path: collector.yaml
-      # imagePullSecrets: 
-      #   - name: default-pullsecret

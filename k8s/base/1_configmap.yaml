@@ -18,6 +18,7 @@ data:
     # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     # See the License for the specific language governing permissions and
     # limitations under the License.
+
     exporters:
       googlecloud:
         log:
@@ -34,10 +35,12 @@ data:
         auth:
           authenticator: googleclientauth
 
+
     extensions:
       health_check:
         endpoint: ${env:MY_POD_IP}:13133
       googleclientauth:
+
 
     processors:
       filter/self-metrics:
@@ -53,6 +56,7 @@ data:
         send_batch_max_size: 200
         send_batch_size: 200
         timeout: 5s
+
       k8sattributes:
         extract:
           metadata:
@@ -77,10 +81,12 @@ data:
             name: k8s.pod.uid
         - sources:
           - from: connection
+
       memory_limiter:
         check_interval: 1s
         limit_percentage: 65
         spike_limit_percentage: 20
+
       metricstransform/self-metrics:
         transforms:
         - action: update
@@ -89,9 +95,11 @@ data:
           - action: add_label
             new_label: version
             new_value: Google-Cloud-OTLP manifests:0.3.0 OpenTelemetry Collector Built By Google/0.122.1 (linux/amd64)
+
       resourcedetection:
         detectors: [gcp]
         timeout: 10s
+
       transform/collision:
         metric_statements:
         - context: datapoint
@@ -108,6 +116,7 @@ data:
           - delete_key(attributes, "instance")
           - set(attributes["exported_project_id"], attributes["project_id"])
           - delete_key(attributes, "project_id")
+
       # The relative ordering of statements between ReplicaSet & Deployment and Job & CronJob are important.
       # The ordering of these controllers is decided based on the k8s controller documentation available at
       # https://kubernetes.io/docs/concepts/workloads/controllers.
@@ -129,6 +138,7 @@ data:
           - set(attributes["top_level_controller_name"], resource.attributes["k8s.job.name"]) where resource.attributes["k8s.job.name"] != nil
           - set(attributes["top_level_controller_type"], "CronJob") where resource.attributes["k8s.cronjob.name"] != nil
           - set(attributes["top_level_controller_name"], resource.attributes["k8s.cronjob.name"]) where resource.attributes["k8s.cronjob.name"] != nil
+
     # When sending telemetry to the GCP OTLP endpoint, the gcp.project_id resource attribute is required to be set to your project ID.
       resource/gcp_project_id:
         attributes:
@@ -136,6 +146,7 @@ data:
           # MAKE SURE YOU REPLACE THIS WITH YOUR PROJECT ID
           value: ${GOOGLE_CLOUD_PROJECT}
           action: insert
+
 
     receivers:
       otlp:
@@ -152,7 +163,7 @@ data:
         protocols:
           grpc:
             endpoint: ${env:MY_POD_IP}:14317
-            
+
     service:
       extensions:
       - health_check
@@ -213,4 +224,3 @@ data:
                 otlp:
                   protocol: grpc
                   endpoint: ${env:MY_POD_IP}:14317
-                

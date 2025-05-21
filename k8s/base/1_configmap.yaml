@@ -155,10 +155,7 @@ data:
               - http://*
               - https://*
             endpoint: ${env:MY_POD_IP}:4318
-      otlp/self-metrics:
-        protocols:
-          grpc:
-            endpoint: ${env:MY_POD_IP}:14317
+      
 
     service:
       extensions:
@@ -187,18 +184,6 @@ data:
           - batch
           receivers:
           - otlp
-        metrics/self-metrics:
-          exporters:
-          - googlemanagedprometheus
-          processors:
-          - filter/self-metrics
-          - metricstransform/self-metrics
-          - k8sattributes
-          - memory_limiter
-          - resourcedetection
-          - batch
-          receivers:
-          - otlp/self-metrics
         traces:
           exporters:
           - otlphttp
